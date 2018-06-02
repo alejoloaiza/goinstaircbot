@@ -12,7 +12,7 @@ import (
 var insta *goinsta.Instagram
 
 func main() {
-	arg := "config/config.json"
+	arg := "../config/config.json"
 	if len(os.Args) > 1 {
 		arg = os.Args[1]
 	}
