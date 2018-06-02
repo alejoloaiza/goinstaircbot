@@ -11,13 +11,23 @@ import (
 var dbpostgre *sql.DB
 var err error
 
-func DBConnectPostgres(configpath string) {
+func DBConnectPostgres() {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", config.Localconfig.DBHost, config.Localconfig.DBPort, config.Localconfig.DBUser, config.Localconfig.DBPass, config.Localconfig.DBName)
 	dbpostgre, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
 	//fmt.Println(">>>>>>>>>>>>>>>>> Successfully connected to Database <<<<<<<<<<<<<<<<<")
+}
+func DBInsertPostgres_Following(Username string) {
+	sqlStatement := `
+	INSERT INTO goinstabot.following
+	VALUES ($1 );`
+
+	_, err := dbpostgre.Exec(sqlStatement, Username)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 /*

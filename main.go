@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"goinstabot/config"
+	"goinstabot/db"
 	"os"
 
 	goinsta "gopkg.in/ahmdrz/goinsta.v2"
@@ -11,11 +12,13 @@ import (
 var insta *goinsta.Instagram
 
 func main() {
-	arg := "../config/config.json"
+	arg := "config/config.json"
 	if len(os.Args) > 1 {
 		arg = os.Args[1]
 	}
+	fmt.Println(arg)
 	_ = config.GetConfig(arg)
+	db.DBConnectPostgres()
 	//insta, err := goinsta.Import("~/.goinsta")
 	fmt.Println("New")
 	insta = goinsta.New(config.Localconfig.InstaUser, config.Localconfig.InstaPass)
@@ -32,19 +35,7 @@ func main() {
 	// after exporting you can use Import function instead of New function.
 	fmt.Println("Sync")
 
-	err := insta.Inbox.Sync()
-	if err != nil {
-		panic(err)
-	}
-	i := 1
-	fmt.Printf("Page %d has %d conversations\n", i, len(insta.Inbox.Conversations))
-
-	for insta.Inbox.Next() {
-		i++
-		fmt.Printf("Page %d has %d conversations\n", i, len(insta.Inbox.Conversations))
-	}
-	//inst.Inbox.Reset()
-
+	getAllFollowing()
 }
 func getAllFollowing() {
 
@@ -56,6 +47,7 @@ func getAllFollowing() {
 		for _, user := range users.Users {
 			cycle++
 			fmt.Printf("   - %v - %s\n", cycle, user.Username)
+			db.DBInsertPostgres_Following(user.Username)
 		}
 	}
 }
