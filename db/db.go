@@ -19,7 +19,7 @@ func DBConnectPostgres() {
 	}
 	//fmt.Println(">>>>>>>>>>>>>>>>> Successfully connected to Database <<<<<<<<<<<<<<<<<")
 }
-func DBInsertPostgres_Following(Username string) {
+func DBInsertPostgres_Following(Username string) error {
 	sqlStatement := `
 	INSERT INTO goinstabot.following
 	VALUES ($1 );`
@@ -28,6 +28,22 @@ func DBInsertPostgres_Following(Username string) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	return err
+}
+func DBSelectPostgres_Following() []string {
+	var users []string
+	rows, err := dbpostgre.Query("SELECT userId FROM goinstabot.following")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for rows.Next() {
+		var username string
+
+		err = rows.Scan(&username)
+		users = append(users, username)
+	}
+	return users
 }
 
 /*
