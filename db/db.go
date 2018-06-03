@@ -30,6 +30,15 @@ func DBInsertPostgres_Following(Username string) error {
 	}
 	return err
 }
+func DBDeletePostgres_Following(Username string) error {
+	sqlStatement := `DELETE FROM goinstabot.following WHERE userId = '$1';`
+
+	_, err := dbpostgre.Exec(sqlStatement, Username)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return err
+}
 func DBSelectPostgres_Following() []string {
 	var users []string
 	rows, err := dbpostgre.Query("SELECT userId FROM goinstabot.following")
