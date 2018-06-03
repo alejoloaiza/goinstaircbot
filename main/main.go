@@ -36,6 +36,44 @@ func main() {
 	fmt.Println("Sync")
 
 }
+func UpdateFollowingDBFrom() {
+	var followingusersDB []string
+	var followingusersApp []string
+	followingusersDB = getAllFollowing_FromDB()
+	followingusersApp = getAllFollowing_FromInstagram()
+
+DBvsApp:
+	for _, dbu := range followingusersDB {
+		var found bool = false
+		for _, dbapp := range followingusersApp {
+			if dbu == dbapp {
+				found = true
+			}
+		}
+		if !found {
+			// This means the user was there before in DB but was deleted from App (unfollowed manually)
+			// TODO: Logic to add this user to blacklist and Blockit in instagram
+			continue DBvsApp
+		}
+	}
+
+AppvsDB:
+	for _, dbapp := range followingusersApp {
+		var found bool = false
+		for _, dbu := range followingusersDB {
+			if dbu == dbapp {
+				found = true
+			}
+		}
+		if !found {
+			// This means the user was added and DB doesnt have it , so we should add it
+			dberr := db.DBInsertPostgres_Following(dbapp)
+			if dberr != nil {
+				continue AppvsDB
+			}
+		}
+	}
+}
 func getAllFollowing_FromDB() []string {
 	var followingusers []string
 	followingusers = db.DBSelectPostgres_Following()
@@ -44,19 +82,13 @@ func getAllFollowing_FromDB() []string {
 func getAllFollowing_FromInstagram() []string {
 	var followingusers []string
 	users := insta.Account.Following()
-	var cycle int32 = 0
 	for users.Next() {
 
 		fmt.Println("Next:", users.NextID)
-	InnerCycle:
+
 		for _, user := range users.Users {
-			cycle++
-			fmt.Printf("   - %v - %s\n", cycle, user.Username)
 			followingusers = append(followingusers, user.Username)
-			dberr := db.DBInsertPostgres_Following(user.Username)
-			if dberr != nil {
-				continue InnerCycle
-			}
+
 		}
 	}
 	return followingusers
