@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"goinstabot/config"
 	"goinstabot/db"
+	"goinstabot/instagram"
 	"os"
 )
 
@@ -15,11 +16,15 @@ func main() {
 	fmt.Println(arg)
 	_ = config.GetConfig(arg)
 	db.DBConnectPostgres()
+	defer db.DBClosePostgress()
 	//insta, err := goinsta.Import("~/.goinsta")
 	fmt.Println("New")
 
 	// export your configuration
 	// after exporting you can use Import function instead of New function.
 	fmt.Println("Sync")
-
+	//db.DBInsertPostgres_Following("muamuamua")
+	//db.DBDeletePostgres_Following("muamuamua")
+	instagram.Login()
+	instagram.SyncFollowingDBfromApp()
 }
