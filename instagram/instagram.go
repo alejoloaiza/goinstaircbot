@@ -23,7 +23,7 @@ func SyncFollowingDBfromApp() {
 	followingusersDB = getAllFollowing_FromDB()
 	followingusersApp = getAllFollowing_FromInstagram()
 
-	if len(followingusersDB) > 0 && len(followingusersApp) > 0 {
+	if len(followingusersApp) > 0 {
 	DBvsApp:
 		for _, dbu := range followingusersDB {
 			var found bool = false
@@ -38,7 +38,7 @@ func SyncFollowingDBfromApp() {
 					continue DBvsApp
 				}
 				// This means the user was there before in DB but was deleted from App (unfollowed manually)
-				// TODO: Logic to add this user to blacklist and Blockit in instagram
+				// TODO: Logic to add this user to blacklist and Block it in instagram
 
 			}
 		}
@@ -52,7 +52,7 @@ func SyncFollowingDBfromApp() {
 				}
 			}
 			if !found {
-				// This means the user was added and DB doesnt have it , so we should add it
+				// This means the user was added and DB doesnt have it , so we should add it there
 				dberr := db.DBInsertPostgres_Following(dbapp)
 				if dberr != nil {
 					continue AppvsDB

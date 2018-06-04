@@ -1,50 +1,59 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 	"goinstabot/config"
 
+	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
+
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-var dbpostgre *sql.DB
+var dbpostgre *gorm.DB
 var err error
 
+type FollowingUser struct {
+	gorm.Model
+	UserId string
+}
+
 func DBConnectPostgres() {
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", config.Localconfig.DBHost, config.Localconfig.DBPort, config.Localconfig.DBUser, config.Localconfig.DBPass, config.Localconfig.DBName)
-	dbpostgre, err = sql.Open("postgres", psqlInfo)
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s", config.Localconfig.DBHost, config.Localconfig.DBPort, config.Localconfig.DBUser, config.Localconfig.DBPass, config.Localconfig.DBName)
+	dbpostgre, err = gorm.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
 	//fmt.Println(">>>>>>>>>>>>>>>>> Successfully connected to Database <<<<<<<<<<<<<<<<<")
 }
 func DBInsertPostgres_Following(Username string) error {
-	sqlStatement := `
-	INSERT INTO goinstabot.following
-	VALUES ($1 );`
 
-	_, err := dbpostgre.Exec(sqlStatement, Username)
-	if err != nil {
-		fmt.Println(err)
+	dbpostgre.Create(&FollowingUser{UserId: Username})
+	if dbpostgre.Error != nil {
+		fmt.Println(dbpostgre.Error)
 	}
 	return err
 }
 func DBDeletePostgres_Following(Username string) error {
-	sqlStatement := `DELETE FROM goinstabot.following WHERE userId = '$1';`
+	var userToDelete FollowingUser
 
-	_, err := dbpostgre.Exec(sqlStatement, Username)
-	if err != nil {
-		fmt.Println(err)
+	dbpostgre.First(&userToDelete, "UserId = ?", Username)
+
+	dbpostgre.Delete(&userToDelete)
+	if dbpostgre.Error != nil {
+		fmt.Println(dbpostgre.Error)
 	}
 	return err
 }
 func DBSelectPostgres_Following() []string {
+	var userToDelete FollowingUser
+
 	var users []string
-	rows, err := dbpostgre.Query("SELECT userId FROM goinstabot.following")
+	rows, err := dbpostgre.Find(&userToDelete).Select("UserId").Rows()
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var username string
@@ -54,20 +63,3 @@ func DBSelectPostgres_Following() []string {
 	}
 	return users
 }
-
-/*
-func DBInsertPostgres(a *assets.Asset) {
-
-	point := fmt.Sprintf(`'POINT( %.6f %.6f )'`, a.Lat, a.Lon)
-
-	sqlStatement := `
-		INSERT INTO parallel.webscrapingresults
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, postgis.ST_GeomFromText( ` + point + ` )  );`
-
-	_, err := dbpostgre.Exec(sqlStatement, a.Business, a.Code, a.Type, a.Agency, a.Location, a.City, a.Area, a.Price, a.Numrooms, a.Numbaths, a.Parking, a.Status, a.Link)
-	//fmt.Println(a.Business, a.Code, a.Type, a.Agency, a.Location, a.City, a.Area, a.Price, a.Numrooms, a.Numbaths, a.Status, a.Link)
-	if err != nil {
-		fmt.Println(err)
-	}
-}
-*/
