@@ -4,11 +4,20 @@ import (
 	"fmt"
 	"goinstabot/config"
 	"goinstabot/db"
+	"log"
+	"strings"
+	"time"
 
-	goinsta "gopkg.in/ahmdrz/goinsta.v2"
+	goinsta "github.com/ahmdrz/goinsta"
 )
 
-var Insta *goinsta.Instagram
+var (
+	Insta          *goinsta.Instagram
+	Following      = make(map[string]int)
+	Blocked        = make(map[string]int)
+	PreferredNames = make(map[string]int)
+	FollowingList  []string
+)
 
 func Login() {
 	Insta = goinsta.New(config.Localconfig.InstaUser, config.Localconfig.InstaPass)
@@ -17,12 +26,56 @@ func Login() {
 		return
 	}
 }
+func LoadFollowingFromDB() {
+	followingusersDB := getAllFollowing_FromDB()
+	FollowingList = followingusersDB
+}
+func StartFollowingWithMediaLikes(Limit int) {
+	for _, myUser := range FollowingList {
+
+		user, err := Insta.Profiles.ByName(myUser)
+		log.Println("Checking user: " + myUser)
+
+		if err != nil {
+			log.Println(err)
+		}
+		media := user.Feed()
+		for media.Next() {
+			fmt.Printf("Printing %d items\n", len(media.Items))
+			for _, item := range media.Items {
+				time.Sleep(1 * time.Second)
+				for _, liker := range item.Likers {
+					fullname := strings.Split(liker.FullName, " ")
+					firstname := strings.ToLower(fullname[0])
+					if PreferredNames[firstname] == 1 && Blocked[liker.Username] != 1 && Following[liker.Username] != 1 {
+						profile, err := Insta.Profiles.ByID(liker.ID)
+						if err != nil {
+							continue
+						}
+					}
+				}
+			}
+			break
+		}
+	}
+}
+
+func SyncMappings(followingList []string, blockedList []string) {
+	Following = make(map[string]int)
+	for _, follow := range followingList {
+		Following[follow] = 1
+	}
+	Blocked = make(map[string]int)
+	for _, block := range blockedList {
+		Blocked[block] = 1
+	}
+}
 func SyncFollowingDBfromApp() {
 	var followingusersDB []string
 	var followingusersApp []string
 	followingusersDB = getAllFollowing_FromDB()
 	followingusersApp = getAllFollowing_FromInstagram()
-
+	FollowingList = followingusersApp
 	if len(followingusersApp) > 0 {
 	DBvsApp:
 		for _, dbu := range followingusersDB {
@@ -37,8 +90,12 @@ func SyncFollowingDBfromApp() {
 				if dberr != nil {
 					continue DBvsApp
 				}
+				dberr = db.DBInsertPostgres_Blocked(dbu)
+				if dberr != nil {
+					continue DBvsApp
+				}
 				// This means the user was there before in DB but was deleted from App (unfollowed manually)
-				// TODO: Logic to add this user to blacklist and Block it in instagram
+				// TODO: Logic to Block it in instagram
 
 			}
 		}
@@ -59,8 +116,12 @@ func SyncFollowingDBfromApp() {
 				}
 			}
 		}
+
 	}
+	SyncMappings(followingusersApp, db.DBSelectPostgres_Blocked())
+
 }
+
 func getAllFollowing_FromDB() []string {
 	var followingusers []string
 	followingusers = db.DBSelectPostgres_Following()

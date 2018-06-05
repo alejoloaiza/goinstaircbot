@@ -24,7 +24,8 @@ func main() {
 	// after exporting you can use Import function instead of New function.
 	fmt.Println("Sync")
 	//db.DBInsertPostgres_Following("muamuamua")
-	//db.DBDeletePostgres_Following("muamuamua")
 	instagram.Login()
-	instagram.SyncFollowingDBfromApp()
+	//instagram.SyncFollowingDBfromApp()
+	instagram.LoadFollowingFromDB()
+	instagram.StartFollowingWithMediaLikes(100)
 }
