@@ -26,6 +26,12 @@ func Login() {
 		return
 	}
 }
+func LoadMappings() {
+	PreferredNames = make(map[string]int)
+	for _, pref := range config.Localconfig.PreferredNames {
+		PreferredNames[pref] = 1
+	}
+}
 func LoadFollowingFromDB() {
 	followingusersDB := getAllFollowing_FromDB()
 	FollowingList = followingusersDB
@@ -43,26 +49,30 @@ func StartFollowingWithMediaLikes(Limit int) {
 		for media.Next() {
 			fmt.Printf("Printing %d items\n", len(media.Items))
 			for _, item := range media.Items {
-				time.Sleep(1 * time.Second)
 				for _, liker := range item.Likers {
+					time.Sleep(1 * time.Second)
 					fullname := strings.Split(liker.FullName, " ")
 					firstname := strings.ToLower(fullname[0])
 					if PreferredNames[firstname] == 1 && Blocked[liker.Username] != 1 && Following[liker.Username] != 1 {
+						time.Sleep(1 * time.Second)
 						profile, err := Insta.Profiles.ByID(liker.ID)
 						if err != nil {
 							continue
 						}
+						biography := strings.ToLower(profile.Biography)
 					PreferenceLoop:
 						for _, pref := range config.Localconfig.BiographyPreference {
-							if strings.Contains(profile.Biography, pref) {
+							if strings.Contains(biography, pref) {
 								profile.Follow()
+								Following[profile.Username] = 1
+								fmt.Printf("Following >>> %s\n", liker.Username)
 								break PreferenceLoop
 							}
 						}
 					}
 				}
 			}
-			break
+
 		}
 	}
 }

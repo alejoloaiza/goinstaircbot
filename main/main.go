@@ -27,5 +27,6 @@ func main() {
 	instagram.Login()
 	//instagram.SyncFollowingDBfromApp()
 	instagram.LoadFollowingFromDB()
+	instagram.LoadMappings()
 	instagram.StartFollowingWithMediaLikes(100)
 }
