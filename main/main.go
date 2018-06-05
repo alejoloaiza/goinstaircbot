@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"goinstabot/config"
-	"goinstabot/db"
-	"goinstabot/instagram"
+	"goinstaircbot/config"
+	"goinstaircbot/db"
+	"goinstaircbot/instagram"
 	"os"
 )
 

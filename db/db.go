@@ -2,11 +2,9 @@ package db
 
 import (
 	"fmt"
-	"goinstabot/config"
+	"goinstaircbot/config"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/lib/pq"
-
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
@@ -32,7 +30,6 @@ func DBConnectPostgres() {
 	dbpostgre.CreateTable(&BlockedUser{})
 	dbpostgre.CreateTable(&FollowingUser{})
 
-	//fmt.Println(">>>>>>>>>>>>>>>>> Successfully connected to Database <<<<<<<<<<<<<<<<<")
 }
 func DBClosePostgress() {
 	dbpostgre.Close()

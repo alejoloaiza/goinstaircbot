@@ -2,8 +2,8 @@ package instagram
 
 import (
 	"fmt"
-	"goinstabot/config"
-	"goinstabot/db"
+	"goinstaircbot/config"
+	"goinstaircbot/db"
 	"log"
 	"strings"
 	"time"
@@ -51,6 +51,13 @@ func StartFollowingWithMediaLikes(Limit int) {
 						profile, err := Insta.Profiles.ByID(liker.ID)
 						if err != nil {
 							continue
+						}
+					PreferenceLoop:
+						for _, pref := range config.Localconfig.BiographyPreference {
+							if strings.Contains(profile.Biography, pref) {
+								profile.Follow()
+								break PreferenceLoop
+							}
 						}
 					}
 				}
