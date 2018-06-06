@@ -36,7 +36,14 @@ func LoadFollowingFromDB() {
 	followingusersDB := getAllFollowing_FromDB()
 	FollowingList = followingusersDB
 }
+func LoadBlockedFromDB() {
+	blockedDB := getAllBlocked_FromDB()
+	for _, buser := range blockedDB {
+		Blocked[buser] = 1
+	}
+}
 func StartFollowingWithMediaLikes(Limit int) {
+	var FollowCount int = 0
 	for _, myUser := range FollowingList {
 
 		user, err := Insta.Profiles.ByName(myUser)
@@ -47,8 +54,10 @@ func StartFollowingWithMediaLikes(Limit int) {
 		}
 		media := user.Feed()
 		for media.Next() {
+
 			fmt.Printf("Printing %d items\n", len(media.Items))
 			for _, item := range media.Items {
+				item.SyncLikers()
 				for _, liker := range item.Likers {
 					time.Sleep(1 * time.Second)
 					fullname := strings.Split(liker.FullName, " ")
@@ -64,6 +73,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 						for _, pref := range config.Localconfig.BiographyPreference {
 							if strings.Contains(biography, pref) {
 								profile.Follow()
+								FollowCount++
 								Following[profile.Username] = 1
 								fmt.Printf("Following >>> %s\n", liker.Username)
 								break PreferenceLoop
@@ -143,6 +153,11 @@ func getAllFollowing_FromDB() []string {
 	var followingusers []string
 	followingusers = db.DBSelectPostgres_Following()
 	return followingusers
+}
+func getAllBlocked_FromDB() []string {
+	var blockedusers []string
+	blockedusers = db.DBSelectPostgres_Blocked()
+	return blockedusers
 }
 func getAllFollowing_FromInstagram() []string {
 	var followingusers []string
