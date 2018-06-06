@@ -20,10 +20,19 @@ var (
 )
 
 func Login() {
-	Insta = goinsta.New(config.Localconfig.InstaUser, config.Localconfig.InstaPass)
-	if err := Insta.Login(); err != nil {
-		fmt.Println(err)
-		return
+	if Insta == nil {
+		Insta = goinsta.New(config.Localconfig.InstaUser, config.Localconfig.InstaPass)
+		if err := Insta.Login(); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+
+}
+func InstaLogout() {
+	if Insta != nil {
+		Insta.Logout()
+		Insta = nil
 	}
 }
 func LoadMappings() {
@@ -35,6 +44,9 @@ func LoadMappings() {
 func LoadFollowingFromDB() {
 	followingusersDB := getAllFollowing_FromDB()
 	FollowingList = followingusersDB
+	for _, fuser := range followingusersDB {
+		Following[fuser] = 1
+	}
 }
 func LoadBlockedFromDB() {
 	blockedDB := getAllBlocked_FromDB()
@@ -60,6 +72,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 				item.SyncLikers()
 				for _, liker := range item.Likers {
 					time.Sleep(1 * time.Second)
+					fmt.Printf("Checking liker: %s \n", liker.Username)
 					fullname := strings.Split(liker.FullName, " ")
 					firstname := strings.ToLower(fullname[0])
 					if PreferredNames[firstname] == 1 && Blocked[liker.Username] != 1 && Following[liker.Username] != 1 {
