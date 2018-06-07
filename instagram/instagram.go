@@ -55,6 +55,15 @@ func LoadBlockedFromDB() {
 	}
 }
 func StartFollowingWithMediaLikes(Limit int) {
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			_, ok = r.(error)
+			if !ok {
+				fmt.Errorf("pkg: %v", r)
+			}
+		}
+	}()
 	var FollowCount int = 0
 	for _, myUser := range FollowingList {
 
@@ -65,12 +74,16 @@ func StartFollowingWithMediaLikes(Limit int) {
 			log.Println(err)
 		}
 		media := user.Feed()
+	MediaLoop:
 		for media.Next() {
 
 			fmt.Printf("Printing %d items\n", len(media.Items))
 			for _, item := range media.Items {
 				item.SyncLikers()
 				for _, liker := range item.Likers {
+					if FollowCount >= Limit {
+						break MediaLoop
+					}
 					time.Sleep(1 * time.Second)
 					fmt.Printf("Checking liker: %s \n", liker.Username)
 					fullname := strings.Split(liker.FullName, " ")
@@ -134,8 +147,12 @@ func SyncFollowingDBfromApp() {
 				if dberr != nil {
 					continue DBvsApp
 				}
-				// This means the user was there before in DB but was deleted from App (unfollowed manually)
-				// TODO: Logic to Block it in instagram
+				user, err := Insta.Profiles.ByName(dbu)
+
+				err = user.Block()
+				if err != nil {
+					fmt.Println(err)
+				}
 
 			}
 		}
