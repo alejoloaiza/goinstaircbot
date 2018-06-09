@@ -64,7 +64,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 			var ok bool
 			_, ok = r.(error)
 			if !ok {
-				sendMessage(ToIRCChan, fmt.Sprint("Recover from error: %v", r))
+				sendMessage(ToIRCChan, fmt.Sprintf("Recover from error: %v", r))
 			}
 		}
 	}()
@@ -72,7 +72,8 @@ func StartFollowingWithMediaLikes(Limit int) {
 	for _, myUser := range FollowingList {
 
 		user, err := Insta.Profiles.ByName(myUser)
-		sendMessage(ToIRCChan, fmt.Sprint("Checking User: %s \n", myUser))
+
+		sendMessage(ToIRCChan, fmt.Sprintf("Checking user >>> %s ", myUser))
 
 		if err != nil {
 			log.Println(err)
@@ -89,6 +90,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 						break MediaLoop
 					}
 					time.Sleep(1 * time.Second)
+
 					fullname := strings.Split(liker.FullName, " ")
 					firstname := strings.ToLower(fullname[0])
 					if PreferredNames[firstname] == 1 && Blocked[liker.Username] != 1 && Following[liker.Username] != 1 {
@@ -98,13 +100,15 @@ func StartFollowingWithMediaLikes(Limit int) {
 							continue
 						}
 						biography := strings.ToLower(profile.Biography)
+						sendMessage(ToIRCChan, fmt.Sprintf("Checking liker >>> %s ", liker.Username))
+
 					PreferenceLoop:
 						for _, pref := range config.Localconfig.BiographyPreference {
 							if strings.Contains(biography, pref) {
 								profile.Follow()
 								FollowCount++
 								Following[profile.Username] = 1
-								sendMessage(ToIRCChan, fmt.Sprint("Following >>> %s \n", liker.Username))
+								sendMessage(ToIRCChan, fmt.Sprintf("Following >>> %s ", liker.Username))
 								break PreferenceLoop
 							}
 						}
