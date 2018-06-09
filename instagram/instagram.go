@@ -147,12 +147,6 @@ func SyncFollowingDBfromApp() {
 				if dberr != nil {
 					continue DBvsApp
 				}
-				user, err := Insta.Profiles.ByName(dbu)
-
-				err = user.Block()
-				if err != nil {
-					fmt.Println(err)
-				}
 
 			}
 		}
