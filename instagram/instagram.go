@@ -17,9 +17,13 @@ var (
 	Blocked        = make(map[string]int)
 	PreferredNames = make(map[string]int)
 	FollowingList  []string
+	FromIRCChan    chan string
+	ToIRCChan      chan string
 )
 
-func Login() {
+func Login(fromirc chan string, toirc chan string) {
+	FromIRCChan = fromirc
+	ToIRCChan = toirc
 	if Insta == nil {
 		Insta = goinsta.New(config.Localconfig.InstaUser, config.Localconfig.InstaPass)
 		if err := Insta.Login(); err != nil {
@@ -60,7 +64,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 			var ok bool
 			_, ok = r.(error)
 			if !ok {
-				fmt.Errorf("pkg: %v", r)
+				sendMessage(ToIRCChan, fmt.Sprint("Recover from error: %v", r))
 			}
 		}
 	}()
@@ -68,7 +72,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 	for _, myUser := range FollowingList {
 
 		user, err := Insta.Profiles.ByName(myUser)
-		log.Println("Checking user: " + myUser)
+		sendMessage(ToIRCChan, fmt.Sprint("Checking User: %s \n", myUser))
 
 		if err != nil {
 			log.Println(err)
@@ -77,7 +81,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 	MediaLoop:
 		for media.Next() {
 
-			fmt.Printf("Printing %d items\n", len(media.Items))
+			//fmt.Printf("Printing %d items\n", len(media.Items))
 			for _, item := range media.Items {
 				item.SyncLikers()
 				for _, liker := range item.Likers {
@@ -85,7 +89,6 @@ func StartFollowingWithMediaLikes(Limit int) {
 						break MediaLoop
 					}
 					time.Sleep(1 * time.Second)
-					fmt.Printf("Checking liker: %s \n", liker.Username)
 					fullname := strings.Split(liker.FullName, " ")
 					firstname := strings.ToLower(fullname[0])
 					if PreferredNames[firstname] == 1 && Blocked[liker.Username] != 1 && Following[liker.Username] != 1 {
@@ -101,7 +104,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 								profile.Follow()
 								FollowCount++
 								Following[profile.Username] = 1
-								fmt.Printf("Following >>> %s\n", liker.Username)
+								sendMessage(ToIRCChan, fmt.Sprint("Following >>> %s \n", liker.Username))
 								break PreferenceLoop
 							}
 						}
@@ -192,4 +195,8 @@ func getAllFollowing_FromInstagram() []string {
 		}
 	}
 	return followingusers
+}
+func sendMessage(toirc chan string, message string) {
+	log.Printf(message)
+	toirc <- message
 }

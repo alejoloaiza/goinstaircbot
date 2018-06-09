@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"goinstaircbot/config"
 	"goinstaircbot/db"
-	"goinstaircbot/instagram"
 	"goinstaircbot/irc"
 	"os"
 )
@@ -25,7 +24,6 @@ func main() {
 	// after exporting you can use Import function instead of New function.
 	fmt.Println("Sync")
 	//db.DBInsertPostgres_Following("muamuamua")
-	instagram.Login()
 	irc.StartIRCprocess()
 	//instagram.SyncFollowingDBfromApp()
 	/*

@@ -4,31 +4,34 @@ import (
 	"bufio"
 	"fmt"
 	"goinstaircbot/config"
+	"goinstaircbot/extra"
+	"goinstaircbot/instagram"
 	"io"
 	"log"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 )
 
 var (
-	Context    string
-	Connection net.Conn
-	InChan     chan string
-	OutChan    chan string
+	Context     string
+	Connection  net.Conn
+	FromIRCChan chan string
+	ToIRCChan   chan string
 )
 
 func StartIRCprocess() {
 	//MsgChan := make(chan string)
 	//allconfig := config.GetConfig(configpath)
-	InChan = make(chan string)
-	OutChan = make(chan string)
+	FromIRCChan = make(chan string)
+	ToIRCChan = make(chan string)
 MainCycle:
 	for {
 		Connection, err := net.Dial("tcp", config.Localconfig.IRCServerPort)
 
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			time.Sleep(2000 * time.Millisecond)
 			continue MainCycle
 		}
@@ -44,20 +47,20 @@ MainCycle:
 			message, err := MyReader.ReadString('\n')
 			// atomixxx: To handle if connection is closed, and jump to next execution.
 			if err != nil {
-				fmt.Println(time.Now().Format(time.Stamp) + ">>>" + err.Error())
+				log.Println(time.Now().Format(time.Stamp) + ">>>" + err.Error())
 				if io.EOF == err {
 					Connection.Close()
-					fmt.Println("server closed connection")
+					log.Println("server closed connection")
 				}
 				time.Sleep(2000 * time.Millisecond)
 				break ReaderCycle
 			}
 
-			fmt.Print(time.Now().Format(time.Stamp) + ">>" + message)
+			log.Print(time.Now().Format(time.Stamp) + ">>" + message)
 
 			// atomixxx: Split the message into words to better compare between different commands
 			text := strings.Split(message, " ")
-			//fmt.Println("Number of objects in text: "+ strconv.Itoa(len(text)))
+			//log.Println("Number of objects in text: "+ strconv.Itoa(len(text)))
 			var respond bool = false
 			var response string
 			// atomixxx: Logic to detect messages, BOT logic should go inside this
@@ -98,7 +101,7 @@ MainCycle:
 
 			if respond == true {
 				fmt.Fprintln(Connection, response)
-				fmt.Println(time.Now().Format(time.Stamp) + "<<" + response)
+				log.Println(time.Now().Format(time.Stamp) + "<<" + response)
 			}
 
 		}
@@ -128,45 +131,36 @@ func ProcessCommand(command []string) string {
 
 			}
 		}
-		if len(command) >= 3 && strings.TrimSpace(command[0]) == "init" {
-			var arg2, arg3 int
-			var err error
-			arg1 := command[1]
-			if extra.IsInteger(extra.RemoveEnds(command[2])) {
-				arg2, err = strconv.Atoi(extra.RemoveEnds(command[2]))
-			} else {
-				UserToFollow = extra.RemoveEnds(command[2])
-			}
-
-			if len(command) >= 4 {
-				arg3, err = strconv.Atoi(extra.RemoveEnds(command[3]))
-			}
-			if err != nil {
-				return ""
-			}
-			if arg1 == "follow" {
-				go ExecuteFollowProcess(UserToFollow, arg2)
-			}
-			if arg1 == "message" {
-				go ExecuteMessageProcess(arg3)
-			}
-			if arg1 == "auto" {
-				go ExecuteAutomaticMode(arg3, arg2)
-
-			}
-			bodyString = "Command received... processing"
-		}
 	*/
+	if len(command) >= 3 && strings.TrimSpace(command[0]) == "init" {
+		var arg2 int
+		var err error
+		arg1 := command[1]
+		if extra.IsInteger(extra.RemoveEnds(command[2])) {
+			arg2, err = strconv.Atoi(extra.RemoveEnds(command[2]))
+		}
+
+		if err != nil {
+			return ""
+		}
+		if arg1 == "follow" {
+			go ExecuteFollowProcess(arg2)
+		}
+
+		bodyString = "Command received... processing"
+	}
+
 	return bodyString
 }
 
-/*
-func ExecuteFollowProcess(UserToFollow string, Limit int) {
-	instagram.InstaLogin(InChan, OutChan)
-	instagram.InstaShowComments(UserToFollow, Limit)
+func ExecuteFollowProcess(Limit int) {
+	instagram.Login(FromIRCChan, ToIRCChan)
+	instagram.SyncFollowingDBfromApp()
+	instagram.StartFollowingWithMediaLikes(Limit)
 	//	defer instagram.InstaLogout()
 }
 
+/*
 func ExecuteMessageProcess(SleepTime int) {
 	instagram.InstaLogin(InChan, OutChan)
 	//instagram.InstaRandomMessages(SleepTime)
@@ -183,7 +177,7 @@ func RoutineWriter(Response net.Conn) {
 	for {
 		var err error
 		select {
-		case msg := <-InChan:
+		case msg := <-ToIRCChan:
 			if Context != "" {
 				_, err = fmt.Fprintln(Response, "PRIVMSG "+Context+" :"+msg)
 			} else {
