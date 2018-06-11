@@ -25,6 +25,7 @@ func main() {
 	fmt.Println("Sync")
 	//db.DBInsertPostgres_Following("muamuamua")
 	instagram.LoadMappings()
+	fmt.Println(instagram.GetResponseFromChatbot("hola", "1"))
 	//irc.StartIRCprocess()
 
 	//instagram.SyncFollowingDBfromApp()
