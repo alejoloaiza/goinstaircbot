@@ -66,7 +66,7 @@ func getInbox_FromInstagram() []string {
 			for _, iuser := range conversation.Users {
 				if iuser.Username != config.Localconfig.InstaUser {
 					inboxusers = append(inboxusers, iuser.Username)
-					fmt.Println(iuser.Username)
+					//fmt.Println(iuser.Username)
 				}
 			}
 		}
@@ -150,6 +150,22 @@ func StartSendingNewMessages(Limit int) {
 	inboxusers := getInbox_FromInstagram()
 	for _, iuser := range inboxusers {
 		InboxUsers[iuser] = 1
+	}
+	sendMessage(ToIRCChan, "Inbox fully loaded")
+	for _, myUser := range FollowingList {
+		if InboxUsers[myUser] != 1 {
+			// TODO LOGIC TO SEND RANDOM MESSAGE
+			newmsguser, err := Insta.Profiles.ByName(myUser)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			text := config.Localconfig.OpeningLine
+			Insta.Inbox.New(newmsguser, text)
+			InboxUsers[myUser] = 1
+			sendMessage(ToIRCChan, fmt.Sprintf("Message sent to: %s ", myUser))
+			time.Sleep(10 * time.Minute)
+
+		}
 	}
 }
 func SyncMappings(followingList []string, blockedList []string) {
@@ -236,11 +252,13 @@ func sendMessage(toirc chan string, message string) {
 	log.Printf(message)
 	toirc <- message
 }
-
+func StartChatbot() {
+	//TODO
+}
 func GetResponseFromChatbot(text string, username string) string {
-	var projectId = config.Localconfig.DialogFlowProjectID
+	var projectID = config.Localconfig.DialogFlowProjectID
 	var langCode = config.Localconfig.DialogFlowLangCode
-	response, err := chatbot.DetectIntentText(projectId, username, text, langCode)
+	response, err := chatbot.DetectIntentText(projectID, username, text, langCode)
 	if err != nil {
 		return err.Error()
 	}

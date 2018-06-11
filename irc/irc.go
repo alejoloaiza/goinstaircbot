@@ -166,12 +166,13 @@ func ExecuteFollowProcess(Limit int) {
 
 func ExecuteMessageProcess(Limit int) {
 	instagram.Login(FromIRCChan, ToIRCChan)
+	instagram.SyncFollowingDBfromApp()
 	instagram.StartSendingNewMessages(Limit)
 	defer instagram.InstaLogout()
 }
 func ExecuteChatbotProcess() {
 	instagram.Login(FromIRCChan, ToIRCChan)
-	instagram.SyncFollowingDBfromApp()
+	instagram.StartChatbot()
 	defer instagram.InstaLogout()
 }
 
