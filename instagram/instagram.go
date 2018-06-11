@@ -2,6 +2,7 @@ package instagram
 
 import (
 	"fmt"
+	"goinstaircbot/chatbot"
 	"goinstaircbot/config"
 	"goinstaircbot/db"
 	"log"
@@ -145,7 +146,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 		}
 	}
 }
-func StartSendingNewMessages(Limit string) {
+func StartSendingNewMessages(Limit int) {
 	inboxusers := getInbox_FromInstagram()
 	for _, iuser := range inboxusers {
 		InboxUsers[iuser] = 1
@@ -234,4 +235,14 @@ func getAllFollowing_FromInstagram() []string {
 func sendMessage(toirc chan string, message string) {
 	log.Printf(message)
 	toirc <- message
+}
+
+func GetResponseFromChatbot(text string, username string) string {
+	var projectId = config.Localconfig.DialogFlowProjectID
+	var langCode = config.Localconfig.DialogFlowLangCode
+	response, err := chatbot.DetectIntentText(projectId, username, text, langCode)
+	if err != nil {
+		return err.Error()
+	}
+	return response
 }

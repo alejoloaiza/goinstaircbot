@@ -19,6 +19,8 @@ type Configuration struct {
 	DBUser              string
 	DBPass              string
 	DBName              string
+	DialogFlowProjectID string
+	DialogFlowLangCode  string
 }
 
 var Localconfig *Configuration
