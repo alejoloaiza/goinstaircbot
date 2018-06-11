@@ -61,12 +61,18 @@ func getInbox_FromInstagram() []string {
 		fmt.Println(err)
 		return nil
 	}
+	for _, conversation := range Insta.Inbox.Conversations {
+		for _, iuser := range conversation.Users {
+			if iuser.Username != config.Localconfig.InstaUser {
+				inboxusers = append(inboxusers, iuser.Username)
+			}
+		}
+	}
 	for Insta.Inbox.Next() {
 		for _, conversation := range Insta.Inbox.Conversations {
 			for _, iuser := range conversation.Users {
 				if iuser.Username != config.Localconfig.InstaUser {
 					inboxusers = append(inboxusers, iuser.Username)
-					//fmt.Println(iuser.Username)
 				}
 			}
 		}
@@ -133,6 +139,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 								Following[profile.Username] = 1
 								match = true
 								sendMessage(ToIRCChan, fmt.Sprintf("Following #%v>>> %s ", FollowCount, liker.Username))
+								time.Sleep(10 * time.Second)
 								break PreferenceLoop
 							}
 						}
@@ -179,6 +186,7 @@ func SyncMappings(followingList []string, blockedList []string) {
 	}
 }
 func SyncFollowingDBfromApp() {
+	sendMessage(ToIRCChan, "Started Sync of Following")
 	var followingusersDB []string
 	var followingusersApp []string
 	followingusersDB = getAllFollowing_FromDB()
@@ -225,6 +233,7 @@ func SyncFollowingDBfromApp() {
 
 	}
 	SyncMappings(followingusersApp, db.DBSelectPostgres_Blocked())
+	sendMessage(ToIRCChan, "Finished Sync of Following")
 
 }
 
