@@ -5,7 +5,6 @@ import (
 	"goinstaircbot/config"
 	"goinstaircbot/db"
 	"goinstaircbot/instagram"
-	"goinstaircbot/irc"
 	"os"
 )
 
@@ -26,7 +25,8 @@ func main() {
 	fmt.Println("Sync")
 	//db.DBInsertPostgres_Following("muamuamua")
 	instagram.LoadMappings()
-	irc.StartIRCprocess()
+	//irc.StartIRCprocess()
+
 	//instagram.SyncFollowingDBfromApp()
 	/*
 		instagram.LoadFollowingFromDB()

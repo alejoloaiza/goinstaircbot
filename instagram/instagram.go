@@ -19,6 +19,7 @@ var (
 	FollowingList  []string
 	FromIRCChan    chan string
 	ToIRCChan      chan string
+	InboxUsers     = make(map[string]int)
 )
 
 func Login(fromirc chan string, toirc chan string) {
@@ -52,6 +53,25 @@ func LoadFollowingFromDB() {
 		Following[fuser] = 1
 	}
 }
+func getInbox_FromInstagram() []string {
+	var inboxusers []string
+	err := Insta.Inbox.Sync()
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	for Insta.Inbox.Next() {
+		for _, conversation := range Insta.Inbox.Conversations {
+			for _, iuser := range conversation.Users {
+				if iuser.Username != config.Localconfig.InstaUser {
+					inboxusers = append(inboxusers, iuser.Username)
+					fmt.Println(iuser.Username)
+				}
+			}
+		}
+	}
+	return inboxusers
+}
 func LoadBlockedFromDB() {
 	blockedDB := getAllBlocked_FromDB()
 	for _, buser := range blockedDB {
@@ -59,6 +79,8 @@ func LoadBlockedFromDB() {
 	}
 }
 func StartFollowingWithMediaLikes(Limit int) {
+	var Rejected = make(map[string]int)
+
 	defer func() {
 		if r := recover(); r != nil {
 			var ok bool
@@ -81,19 +103,19 @@ func StartFollowingWithMediaLikes(Limit int) {
 		media := user.Feed()
 	MediaLoop:
 		for media.Next() {
-
-			//fmt.Printf("Printing %d items\n", len(media.Items))
 			for _, item := range media.Items {
 				item.SyncLikers()
 				for _, liker := range item.Likers {
+					match := false
 					if FollowCount >= Limit {
+						sendMessage(ToIRCChan, fmt.Sprintf("Finished with #%v ", FollowCount))
 						break MediaLoop
 					}
 					time.Sleep(1 * time.Second)
 
 					fullname := strings.Split(liker.FullName, " ")
 					firstname := strings.ToLower(fullname[0])
-					if PreferredNames[firstname] == 1 && Blocked[liker.Username] != 1 && Following[liker.Username] != 1 {
+					if Rejected[liker.Username] != 1 && PreferredNames[firstname] == 1 && Blocked[liker.Username] != 1 && Following[liker.Username] != 1 {
 						time.Sleep(1 * time.Second)
 						profile, err := Insta.Profiles.ByID(liker.ID)
 						if err != nil {
@@ -108,9 +130,13 @@ func StartFollowingWithMediaLikes(Limit int) {
 								profile.Follow()
 								FollowCount++
 								Following[profile.Username] = 1
-								sendMessage(ToIRCChan, fmt.Sprintf("Following >>> %s ", liker.Username))
+								match = true
+								sendMessage(ToIRCChan, fmt.Sprintf("Following #%v>>> %s ", FollowCount, liker.Username))
 								break PreferenceLoop
 							}
+						}
+						if !match {
+							Rejected[profile.Username] = 1
 						}
 					}
 				}
@@ -119,7 +145,12 @@ func StartFollowingWithMediaLikes(Limit int) {
 		}
 	}
 }
-
+func StartSendingNewMessages(Limit string) {
+	inboxusers := getInbox_FromInstagram()
+	for _, iuser := range inboxusers {
+		InboxUsers[iuser] = 1
+	}
+}
 func SyncMappings(followingList []string, blockedList []string) {
 	Following = make(map[string]int)
 	for _, follow := range followingList {

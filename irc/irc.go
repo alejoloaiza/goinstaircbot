@@ -135,7 +135,7 @@ func ProcessCommand(command []string) string {
 	if len(command) >= 3 && strings.TrimSpace(command[0]) == "init" {
 		var arg2 int
 		var err error
-		arg1 := command[1]
+		arg1 := extra.RemoveEnds(command[1])
 		if extra.IsInteger(extra.RemoveEnds(command[2])) {
 			arg2, err = strconv.Atoi(extra.RemoveEnds(command[2]))
 		}
@@ -143,10 +143,14 @@ func ProcessCommand(command []string) string {
 		if err != nil {
 			return ""
 		}
-		if arg1 == "follow" {
+		switch arg1 {
+		case "follow":
 			go ExecuteFollowProcess(arg2)
+		case "message":
+			go ExecuteMessageProcess(arg2)
+		case "chatbot":
+			go ExecuteChatbotProcess()
 		}
-
 		bodyString = "Command received... processing"
 	}
 
@@ -157,22 +161,20 @@ func ExecuteFollowProcess(Limit int) {
 	instagram.Login(FromIRCChan, ToIRCChan)
 	instagram.SyncFollowingDBfromApp()
 	instagram.StartFollowingWithMediaLikes(Limit)
-	//	defer instagram.InstaLogout()
+	defer instagram.InstaLogout()
 }
 
-/*
-func ExecuteMessageProcess(SleepTime int) {
-	instagram.InstaLogin(InChan, OutChan)
-	//instagram.InstaRandomMessages(SleepTime)
-	//	defer instagram.InstaLogout()
+func ExecuteMessageProcess(Limit int) {
+	instagram.Login(FromIRCChan, ToIRCChan)
+	instagram.StartSendingNewMessages(Limit)
+	defer instagram.InstaLogout()
+}
+func ExecuteChatbotProcess() {
+	instagram.Login(FromIRCChan, ToIRCChan)
+	instagram.SyncFollowingDBfromApp()
+	defer instagram.InstaLogout()
 }
 
-func ExecuteAutomaticMode(SleepTime int, Limit int) {
-	instagram.InstaLogin(InChan, OutChan)
-	instagram.InstaTimeLineMessages(SleepTime, Limit)
-	//	defer instagram.InstaLogout()
-}
-*/
 func RoutineWriter(Response net.Conn) {
 	for {
 		var err error
