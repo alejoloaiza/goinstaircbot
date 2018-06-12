@@ -45,7 +45,6 @@ MainCycle:
 		for {
 
 			message, err := MyReader.ReadString('\n')
-			// atomixxx: To handle if connection is closed, and jump to next execution.
 			if err != nil {
 				log.Println(time.Now().Format(time.Stamp) + ">>>" + err.Error())
 				if io.EOF == err {
@@ -58,17 +57,14 @@ MainCycle:
 
 			log.Print(time.Now().Format(time.Stamp) + ">>" + message)
 
-			// atomixxx: Split the message into words to better compare between different commands
 			text := strings.Split(message, " ")
 			//log.Println("Number of objects in text: "+ strconv.Itoa(len(text)))
 			var respond bool = false
 			var response string
-			// atomixxx: Logic to detect messages, BOT logic should go inside this
 			if len(text) >= 4 && text[1] == "PRIVMSG" {
 				respond = true
 				var repeat bool = true
 				var respondTo string
-				//atomixxx logic to differ if message is channel or private from user
 				if text[2][0:1] == "#" {
 					// logic to respond the same thing to a channel / repeater BOT
 					respondTo = text[2]
@@ -92,7 +88,6 @@ MainCycle:
 
 				}
 			}
-			// atomixxx: Ping/Pong handler to avoid timeout disconnect from the irc server
 			if len(text) == 2 && text[0] == "PING" {
 				response = "PONG " + text[1]
 				respond = true
@@ -105,7 +100,6 @@ MainCycle:
 			}
 
 		}
-		// atomixxx: If connection is closed, will try to reconnect after 2 seconds
 		time.Sleep(2000 * time.Millisecond)
 	}
 

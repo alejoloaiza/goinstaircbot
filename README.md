@@ -22,14 +22,14 @@
 - `go get -u -v github.com/jinzhu/gorm`
 
 ## Config file
-You must provide a config file fullpath as unique argument to the program. Here(CONFIG.md) you can find a guide on how to configure your config file (CONFIG.md).
+You must provide a config file fullpath as unique argument to the program. Here(https://github.com/alejoloaiza/goinstaircbot/blob/master/CONFIG.md) you can find a guide on how to set up your config file.
 
 ## Commands
 
 Once your bot is configured an joins a channel, you can talk to him on channel or on private message, this are the commands:
 
  **1) !cmd init follow `<number of new followers>`**
-- `<number of new followers>` give a limit number of followers you want to add.**
+- `<number of new followers>` give a limit number of followers you want to add. Try not to add more than 150 contacts by day.
 * **Once the bot recieves this command, it will start doing this steps:**
 * **a) Check the contacts you are following and the media of those contacts.**
 * **b) Check if that media has likes, and see if those likes belong to people with names listed withing the config parameter PreferredNames.**
@@ -45,4 +45,4 @@ Once your bot is configured an joins a channel, you can talk to him on channel o
  **3) !cmd init chatbot**
 * **Once the bot recieves this command, it will start doing this steps:**
 * **a) Every once a while will check if someone has responded any of his messages.**
-* **b) If someone responded, it will respond again based on a chatbot flow defined in Google Dialog Flow and mapped to this project with the config variables DialogFlowProjectID and DialogFlowLangCode.**
+* **b) If someone responded, it will respond again based on a chatbot flow defined in Google Dialog Flow and mapped to this appliation with the config variables DialogFlowProjectID and DialogFlowLangCode.**
