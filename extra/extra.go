@@ -2,6 +2,7 @@ package extra
 
 import (
 	"math"
+	"math/rand"
 	"strconv"
 	"strings"
 )
@@ -32,4 +33,7 @@ func IsInteger(s string) bool {
 }
 func RemoveEnds(input string) string {
 	return strings.TrimSpace(strings.Trim(strings.Trim(strings.Trim(input, "\n"), "\r"), "\t"))
+}
+func Random(min int, max int) int {
+	return rand.Intn(max-min) + min
 }

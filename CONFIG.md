@@ -25,7 +25,7 @@ Now what shoud be there inside this file? lets take a look:
 "DBName":"postgres",   
 "DialogFlowProjectID":"chatbot-dialogflow",
 "DialogFlowLangCode":"en",
-"OpeningLine":"hello!!! how are u? I really like that picture."
+"OpeningLine":["hello {name}!!! how are u? I really like that picture.","Hi {name}, good to see you, are you interested on buying this pills?"]
 }
 ```
 Now here I will explain each parameter an why its used.
@@ -45,7 +45,7 @@ Now here I will explain each parameter an why its used.
 * **DBName: The name of your DB, where your tables will be created.**
 * **DialogFlowProjectID: This project ID is created on Google Cloud Platform. Check this [link](https://cloud.google.com/dialogflow-enterprise/docs/quickstart-client-libraries) if you dont have idea of what Im talking.**
 * **DialogFlowLangCode: This is the language of the Bot, en for English, es for Spanish, and so on.**
-* **OpeningLine: Its the first sentence our bot is going to send to his following contacts.**
+* **OpeningLine: Its the first sentence our bot is going to send to his following contacts. Try to have more than one, It helps on Instagram Spam checks**
 
 # Database
 * **You need to create a PostgreSQL Database. Sorry for that :(**

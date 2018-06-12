@@ -5,6 +5,7 @@ import (
 	"goinstaircbot/chatbot"
 	"goinstaircbot/config"
 	"goinstaircbot/db"
+	"goinstaircbot/extra"
 	"log"
 	"strings"
 	"time"
@@ -13,9 +14,10 @@ import (
 )
 
 const (
-	WaitBetweenMessages  = 10 //Time in Minutes to wait between messages being sent, carefull this parameter cannot be two low or Instagram will block you on Spam.
-	WaitInsideLikersLoop = 1  //Time in Seconds to wait between Instagram Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
-	WaitAfterFollow      = 10 // Time in Seconds to wait between Instagram Follow and Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
+	WaitBetweenMessages      = 10 //Time in Minutes to wait between messages being sent, carefull this parameter cannot be two low or Instagram will block you on Spam.
+	WaitInsideLikersLoop     = 1  //Time in Seconds to wait between Instagram Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
+	WaitAfterFollow          = 10 // Time in Seconds to wait between Instagram Follow and Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
+	WaitBetweenChatbotCycles = 5  // Time in Minutes to check if someone has reponded any of my direct messages to respond back based on Dialog Flow.
 )
 
 var (
@@ -161,6 +163,15 @@ func StartFollowingWithMediaLikes(Limit int) {
 }
 func StartSendingNewMessages(Limit int) {
 	var MessageCount = 0
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			_, ok = r.(error)
+			if !ok {
+				sendMessage(ToIRCChan, fmt.Sprintf("Recover from error: %v", r))
+			}
+		}
+	}()
 	inboxusers := getInbox_FromInstagram()
 	for _, iuser := range inboxusers {
 		InboxUsers[iuser] = 1
@@ -168,7 +179,7 @@ func StartSendingNewMessages(Limit int) {
 	sendMessage(ToIRCChan, "Inbox fully loaded")
 	for _, myUser := range FollowingList {
 		if MessageCount >= Limit {
-			sendMessage(ToIRCChan, fmt.Sprintf("Finished with %v ", MessageCount))
+			sendMessage(ToIRCChan, fmt.Sprintf("Finished with #%v ", MessageCount))
 			break
 		}
 		if InboxUsers[myUser] != 1 {
@@ -177,7 +188,7 @@ func StartSendingNewMessages(Limit int) {
 			if err != nil {
 				fmt.Println(err.Error())
 			}
-			text := config.Localconfig.OpeningLine
+			text := GetMessageText(newmsguser)
 			err = Insta.Inbox.New(newmsguser, text)
 			if err != nil {
 				sendMessage(ToIRCChan, err.Error())
@@ -191,6 +202,20 @@ func StartSendingNewMessages(Limit int) {
 		}
 	}
 }
+
+func GetMessageText(u *goinsta.User) string {
+	max := len(config.Localconfig.OpeningLine)
+	Message := config.Localconfig.OpeningLine[extra.Random(0, max)]
+	userFullname := strings.Split(u.FullName, " ")
+	var resp string
+	if PreferredNames[strings.ToLower(userFullname[0])] == 1 {
+		resp = strings.Replace(Message, "{name}", strings.ToLower(userFullname[0]), 1)
+	} else {
+		resp = strings.Replace(Message, "{name}", "", 1)
+	}
+	return resp
+
+}
 func SyncMappings(followingList []string, blockedList []string) {
 	Following = make(map[string]int)
 	for _, follow := range followingList {
@@ -203,6 +228,15 @@ func SyncMappings(followingList []string, blockedList []string) {
 }
 func SyncFollowingDBfromApp() {
 	sendMessage(ToIRCChan, "Started Sync of Following")
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			_, ok = r.(error)
+			if !ok {
+				sendMessage(ToIRCChan, fmt.Sprintf("Recover from error: %v", r))
+			}
+		}
+	}()
 	var followingusersDB []string
 	var followingusersApp []string
 	followingusersDB = getAllFollowing_FromDB()
@@ -278,7 +312,18 @@ func sendMessage(toirc chan string, message string) {
 	toirc <- message
 }
 func StartChatbot() {
-	//TODO
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			_, ok = r.(error)
+			if !ok {
+				sendMessage(ToIRCChan, fmt.Sprintf("Recover from error: %v", r))
+			}
+		}
+	}()
+
+	time.Sleep(WaitBetweenChatbotCycles * time.Minute)
+
 }
 func GetResponseFromDialogFlow(text string, username string) string {
 	var projectID = config.Localconfig.DialogFlowProjectID

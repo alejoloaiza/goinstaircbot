@@ -22,8 +22,6 @@ var (
 )
 
 func StartIRCprocess() {
-	//MsgChan := make(chan string)
-	//allconfig := config.GetConfig(configpath)
 	FromIRCChan = make(chan string)
 	ToIRCChan = make(chan string)
 MainCycle:

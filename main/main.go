@@ -20,12 +20,8 @@ func main() {
 	defer db.DBClosePostgress()
 
 	instagram.LoadMappings()
+	instagram.LoadFollowingFromDB()
+	instagram.LoadBlockedFromDB()
 	irc.StartIRCprocess()
 
-	/*
-		instagram.LoadFollowingFromDB()
-		instagram.LoadBlockedFromDB()
-		instagram.LoadMappings()
-		instagram.StartFollowingWithMediaLikes(100)
-	*/
 }

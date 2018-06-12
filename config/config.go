@@ -10,7 +10,7 @@ type Configuration struct {
 	BlacklistUsers      []string
 	PreferredNames      []string
 	BiographyPreference []string
-	OpeningLine         string
+	OpeningLine         []string
 	IRCNick             string
 	IRCChannels         string
 	IRCUser             string
