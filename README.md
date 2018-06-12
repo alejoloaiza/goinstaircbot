@@ -22,7 +22,7 @@
 - `go get -u -v github.com/jinzhu/gorm`
 
 ## Config file
-You must provide a config file fullpath as unique argument to the program. Here(https://github.com/alejoloaiza/goinstaircbot/blob/master/CONFIG.md) you can find a guide on how to set up your config file.
+You must provide a config file fullpath as unique argument to the program. [Here](CONFIG.md) you can find a guide on how to set up your config file.
 
 ## Commands
 
@@ -45,4 +45,4 @@ Once your bot is configured an joins a channel, you can talk to him on channel o
  **3) !cmd init chatbot**
 * **Once the bot recieves this command, it will start doing this steps:**
 * **a) Every once a while will check if someone has responded any of his messages.**
-* **b) If someone responded, it will respond again based on a chatbot flow defined in Google Dialog Flow and mapped to this appliation with the config variables DialogFlowProjectID and DialogFlowLangCode.**
+* **b) If someone responded, it will respond again based on a chatbot flow defined in Google Dialog Flow and mapped to this application with the config variables DialogFlowProjectID and DialogFlowLangCode.**
