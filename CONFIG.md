@@ -28,7 +28,7 @@ Now what shoud be there inside this file? lets take a look:
 "OpeningLine":"hello!!! how are u? I really like that picture."
 }
 ```
-Now here I will explain each parameter an why and when is used.
+Now here I will explain each parameter an why its used.
 * **InstaUser: The user id of your instagram account, its used during Login.**
 * **InstaPass: The password of your instagram account, its used during Login.**
 * **PreferredNames: This list of names are considered during Auto following, Bot will only add people with this names.**
@@ -45,13 +45,14 @@ Now here I will explain each parameter an why and when is used.
 * **DBName: The name of your DB, where your tables will be created.**
 * **DialogFlowProjectID: This project ID is created on Google Cloud Platform. Check this [link](https://cloud.google.com/dialogflow-enterprise/docs/quickstart-client-libraries) if you dont have idea of what Im talking.**
 * **DialogFlowLangCode: This is the language of the Bot, en for English, es for Spanish, and so on.**
-* **OpeningLine: Its the first sentence our bot is going to send to his followers.**
+* **OpeningLine: Its the first sentence our bot is going to send to his following contacts.**
 
 # Database
+* **You need to create a PostgreSQL Database. Sorry for that :(**
 **Why a DB is required?** Okay basically the bot has some sort of memory stored in the DB.
 **Which memory?** For example if you manually unfollow someone, Bot will detect this and will not follow this contact again in future.
 
-**Important:** For database config you just need to give a user that has enough privileges to create tables on a DB, you dont need to create anything, the ORM will take care fo that.
+**Important:** For database config you just need to give a user that has enough privileges to create tables on a DB, you dont need to create anything, the ORM will take care of that.
 
 # Google Dialog Flow
 You should have a environment variable **GOOGLE_APPLICATION_CREDENTIALS** pointing to the json file of your (GCP) Google Cloud Platform configuration. For more info about this, check this [link](https://cloud.google.com/docs/authentication/getting-started).

@@ -18,17 +18,10 @@ func main() {
 	_ = config.GetConfig(arg)
 	db.DBConnectPostgres()
 	defer db.DBClosePostgress()
-	//insta, err := goinsta.Import("~/.goinsta")
-	fmt.Println("New")
 
-	// export your configuration
-	// after exporting you can use Import function instead of New function.
-	fmt.Println("Sync")
-	//db.DBInsertPostgres_Following("muamuamua")
 	instagram.LoadMappings()
 	irc.StartIRCprocess()
 
-	//instagram.SyncFollowingDBfromApp()
 	/*
 		instagram.LoadFollowingFromDB()
 		instagram.LoadBlockedFromDB()

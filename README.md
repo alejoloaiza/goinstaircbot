@@ -29,7 +29,7 @@ You must provide a config file fullpath as unique argument to the program. [Here
 Once your bot is configured an joins a channel, you can talk to him on channel or on private message, this are the commands:
 
  **1) !cmd init follow `<number of new followers>`**
-- `<number of new followers>` give a limit number of followers you want to add. Try not to add more than 150 contacts by day.
+- `<number of new followers>` give a limit number of followers you want to add. Try not to add more than 150 contacts by day (Or Instagram will block you).
 * **Once the bot recieves this command, it will start doing this steps:**
 * **a) Check the contacts you are following and the media of those contacts.**
 * **b) Check if that media has likes, and see if those likes belong to people with names listed withing the config parameter PreferredNames.**

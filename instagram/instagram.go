@@ -12,6 +12,12 @@ import (
 	goinsta "github.com/ahmdrz/goinsta"
 )
 
+const (
+	WaitBetweenMessages  = 10 //Time in Minutes to wait between messages being sent, carefull this parameter cannot be two low or Instagram will block you on Spam.
+	WaitInsideLikersLoop = 1  //Time in Seconds to wait between Instagram Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
+	WaitAfterFollow      = 10 // Time in Seconds to wait between Instagram Follow and Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
+)
+
 var (
 	Insta          *goinsta.Instagram
 	Following      = make(map[string]int)
@@ -118,12 +124,12 @@ func StartFollowingWithMediaLikes(Limit int) {
 						sendMessage(ToIRCChan, fmt.Sprintf("Finished with #%v ", FollowCount))
 						break MediaLoop
 					}
-					time.Sleep(1 * time.Second)
+					time.Sleep(WaitInsideLikersLoop * time.Second)
 
 					fullname := strings.Split(liker.FullName, " ")
 					firstname := strings.ToLower(fullname[0])
 					if Rejected[liker.Username] != 1 && PreferredNames[firstname] == 1 && Blocked[liker.Username] != 1 && Following[liker.Username] != 1 {
-						time.Sleep(1 * time.Second)
+						time.Sleep(WaitInsideLikersLoop * time.Second)
 						profile, err := Insta.Profiles.ByID(liker.ID)
 						if err != nil {
 							continue
@@ -139,7 +145,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 								Following[profile.Username] = 1
 								match = true
 								sendMessage(ToIRCChan, fmt.Sprintf("Following #%v>>> %s ", FollowCount, liker.Username))
-								time.Sleep(10 * time.Second)
+								time.Sleep(WaitAfterFollow * time.Second)
 								break PreferenceLoop
 							}
 						}
@@ -154,12 +160,17 @@ func StartFollowingWithMediaLikes(Limit int) {
 	}
 }
 func StartSendingNewMessages(Limit int) {
+	var MessageCount = 0
 	inboxusers := getInbox_FromInstagram()
 	for _, iuser := range inboxusers {
 		InboxUsers[iuser] = 1
 	}
 	sendMessage(ToIRCChan, "Inbox fully loaded")
 	for _, myUser := range FollowingList {
+		if MessageCount >= Limit {
+			sendMessage(ToIRCChan, fmt.Sprintf("Finished with %v ", MessageCount))
+			break
+		}
 		if InboxUsers[myUser] != 1 {
 			// TODO LOGIC TO SEND RANDOM MESSAGE
 			newmsguser, err := Insta.Profiles.ByName(myUser)
@@ -167,10 +178,15 @@ func StartSendingNewMessages(Limit int) {
 				fmt.Println(err.Error())
 			}
 			text := config.Localconfig.OpeningLine
-			Insta.Inbox.New(newmsguser, text)
+			err = Insta.Inbox.New(newmsguser, text)
+			if err != nil {
+				sendMessage(ToIRCChan, err.Error())
+				continue
+			}
+			MessageCount++
 			InboxUsers[myUser] = 1
-			sendMessage(ToIRCChan, fmt.Sprintf("Message sent to: %s ", myUser))
-			time.Sleep(10 * time.Minute)
+			sendMessage(ToIRCChan, fmt.Sprintf("Message #%v sent to: %s ", MessageCount, myUser))
+			time.Sleep(WaitBetweenMessages * time.Minute)
 
 		}
 	}
@@ -264,7 +280,7 @@ func sendMessage(toirc chan string, message string) {
 func StartChatbot() {
 	//TODO
 }
-func GetResponseFromChatbot(text string, username string) string {
+func GetResponseFromDialogFlow(text string, username string) string {
 	var projectID = config.Localconfig.DialogFlowProjectID
 	var langCode = config.Localconfig.DialogFlowLangCode
 	response, err := chatbot.DetectIntentText(projectID, username, text, langCode)
