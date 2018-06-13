@@ -126,8 +126,6 @@ func StartFollowingWithMediaLikes(Limit int) {
 						sendMessage(ToIRCChan, fmt.Sprintf("Finished with #%v ", FollowCount))
 						break MediaLoop
 					}
-					time.Sleep(WaitInsideLikersLoop * time.Second)
-
 					fullname := strings.Split(liker.FullName, " ")
 					firstname := strings.ToLower(fullname[0])
 					if Rejected[liker.Username] != 1 && PreferredNames[firstname] == 1 && Blocked[liker.Username] != 1 && Following[liker.Username] != 1 {
@@ -146,7 +144,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 								FollowCount++
 								Following[profile.Username] = 1
 								match = true
-								sendMessage(ToIRCChan, fmt.Sprintf("Following #%v>>> %s ", FollowCount, liker.Username))
+								sendMessage(ToIRCChan, fmt.Sprintf("MATCH #%v: Following >>> %s ", FollowCount, liker.Username))
 								time.Sleep(WaitAfterFollow * time.Second)
 								break PreferenceLoop
 							}
@@ -321,8 +319,30 @@ func StartChatbot() {
 			}
 		}
 	}()
+	for {
+		err := Insta.Inbox.Sync()
+		if err != nil {
+			break
+		}
+		for _, conv := range Insta.Inbox.Conversations {
+			if conv.Inviter.Username != config.Localconfig.InstaUser {
+				for _, item := range conv.Items {
+					responsemsg := GetResponseFromDialogFlow(item.Text, conv.Inviter.Username)
+					if responsemsg != "" {
+						err = conv.Send(responsemsg)
+						if err != nil {
+							sendMessage(ToIRCChan, fmt.Sprintf("Error ocurred %s", err.Error()))
+							continue
+						}
+						sendMessage(ToIRCChan, fmt.Sprintf("Chatbot responded to: %s, with msg: %s", conv.Inviter.Username, responsemsg))
+						time.Sleep(1 * time.Second)
+					}
+				}
+			}
 
-	time.Sleep(WaitBetweenChatbotCycles * time.Minute)
+		}
+		time.Sleep(WaitBetweenChatbotCycles * time.Minute)
+	}
 
 }
 func GetResponseFromDialogFlow(text string, username string) string {

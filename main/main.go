@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"goinstaircbot/config"
 	"goinstaircbot/db"
 	"goinstaircbot/instagram"
@@ -14,7 +13,6 @@ func main() {
 	if len(os.Args) > 1 {
 		arg = os.Args[1]
 	}
-	fmt.Println(arg)
 	_ = config.GetConfig(arg)
 	db.DBConnectPostgres()
 	defer db.DBClosePostgress()
