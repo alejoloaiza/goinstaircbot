@@ -320,14 +320,16 @@ func StartChatbot() {
 		for _, conv := range Insta.Inbox.Conversations {
 			if conv.Inviter.Username != config.Localconfig.InstaUser {
 				for _, item := range conv.Items {
-					responsemsg := GetResponseFromDialogFlow(item.Text, conv.Inviter.Username)
-					if responsemsg != "" {
-						err = conv.Send(responsemsg)
-						if CheckErr(err) {
-							continue
+					if item.Type == "text" {
+						responsemsg := GetResponseFromDialogFlow(item.Text, conv.Inviter.Username)
+						if responsemsg != "" {
+							err = conv.Send(responsemsg)
+							if CheckErr(err) {
+								continue
+							}
+							sendMessage(ToIRCChan, fmt.Sprintf("Chatbot responded to: %s, with msg: %s", conv.Inviter.Username, responsemsg))
+							time.Sleep(1 * time.Second)
 						}
-						sendMessage(ToIRCChan, fmt.Sprintf("Chatbot responded to: %s, with msg: %s", conv.Inviter.Username, responsemsg))
-						time.Sleep(1 * time.Second)
 					}
 				}
 			}
