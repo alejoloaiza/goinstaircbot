@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	WaitBetweenMessages      = 10 //Time in Minutes to wait between messages being sent, carefull this parameter cannot be two low or Instagram will block you on Spam.
-	WaitInsideLikersLoop     = 1  //Time in Seconds to wait between Instagram Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
+	WaitBetweenMessages      = 10 // Time in Minutes to wait between messages being sent, carefull this parameter cannot be two low or Instagram will block you on Spam.
+	WaitInsideLikersLoop     = 1  // Time in Seconds to wait between Instagram Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
 	WaitAfterFollow          = 10 // Time in Seconds to wait between Instagram Follow and Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
 	WaitBetweenChatbotCycles = 5  // Time in Minutes to check if someone has reponded any of my direct messages to respond back based on Dialog Flow.
 )
@@ -36,8 +36,7 @@ func Login(fromirc chan string, toirc chan string) {
 	ToIRCChan = toirc
 	if Insta == nil {
 		Insta = goinsta.New(config.Localconfig.InstaUser, config.Localconfig.InstaPass)
-		if err := Insta.Login(); err != nil {
-			fmt.Println(err)
+		if err := Insta.Login(); CheckErr(err) {
 			return
 		}
 	}
@@ -65,8 +64,7 @@ func LoadFollowingFromDB() {
 func getInbox_FromInstagram() []string {
 	var inboxusers []string
 	err := Insta.Inbox.Sync()
-	if err != nil {
-		fmt.Println(err)
+	if CheckErr(err) {
 		return nil
 	}
 	for _, conversation := range Insta.Inbox.Conversations {
@@ -109,17 +107,16 @@ func StartFollowingWithMediaLikes(Limit int) {
 	for _, myUser := range FollowingList {
 
 		user, err := Insta.Profiles.ByName(myUser)
+		CheckErr(err)
 
 		sendMessage(ToIRCChan, fmt.Sprintf("Checking user >>> %s ", myUser))
 
-		if err != nil {
-			log.Println(err)
-		}
 		media := user.Feed()
 	MediaLoop:
 		for media.Next() {
 			for _, item := range media.Items {
-				item.SyncLikers()
+				err = item.SyncLikers()
+				CheckErr(err)
 				for _, liker := range item.Likers {
 					match := false
 					if FollowCount >= Limit {
@@ -131,7 +128,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 					if Rejected[liker.Username] != 1 && PreferredNames[firstname] == 1 && Blocked[liker.Username] != 1 && Following[liker.Username] != 1 {
 						time.Sleep(WaitInsideLikersLoop * time.Second)
 						profile, err := Insta.Profiles.ByID(liker.ID)
-						if err != nil {
+						if CheckErr(err) {
 							continue
 						}
 						biography := strings.ToLower(profile.Biography)
@@ -181,15 +178,11 @@ func StartSendingNewMessages(Limit int) {
 			break
 		}
 		if InboxUsers[myUser] != 1 {
-			// TODO LOGIC TO SEND RANDOM MESSAGE
 			newmsguser, err := Insta.Profiles.ByName(myUser)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
+			CheckErr(err)
 			text := GetMessageText(newmsguser)
 			err = Insta.Inbox.New(newmsguser, text)
-			if err != nil {
-				sendMessage(ToIRCChan, err.Error())
+			if CheckErr(err) {
 				continue
 			}
 			MessageCount++
@@ -321,7 +314,7 @@ func StartChatbot() {
 	}()
 	for {
 		err := Insta.Inbox.Sync()
-		if err != nil {
+		if CheckErr(err) {
 			break
 		}
 		for _, conv := range Insta.Inbox.Conversations {
@@ -330,8 +323,7 @@ func StartChatbot() {
 					responsemsg := GetResponseFromDialogFlow(item.Text, conv.Inviter.Username)
 					if responsemsg != "" {
 						err = conv.Send(responsemsg)
-						if err != nil {
-							sendMessage(ToIRCChan, fmt.Sprintf("Error ocurred %s", err.Error()))
+						if CheckErr(err) {
 							continue
 						}
 						sendMessage(ToIRCChan, fmt.Sprintf("Chatbot responded to: %s, with msg: %s", conv.Inviter.Username, responsemsg))
@@ -349,8 +341,16 @@ func GetResponseFromDialogFlow(text string, username string) string {
 	var projectID = config.Localconfig.DialogFlowProjectID
 	var langCode = config.Localconfig.DialogFlowLangCode
 	response, err := chatbot.DetectIntentText(projectID, username, text, langCode)
-	if err != nil {
-		return err.Error()
+	if CheckErr(err) {
+		return ""
 	}
 	return response
+}
+func CheckErr(e error) bool {
+	if e != nil {
+		sendMessage(ToIRCChan, fmt.Sprintf("Error ocurred %s", e.Error()))
+		return true
+	} else {
+		return false
+	}
 }

@@ -124,25 +124,31 @@ func ProcessCommand(command []string) string {
 			}
 		}
 	*/
-	if len(command) >= 3 && strings.TrimSpace(command[0]) == "init" {
-		var arg2 int
+	if strings.TrimSpace(command[0]) == "init" {
 		var err error
 		arg1 := extra.RemoveEnds(command[1])
-		if extra.IsInteger(extra.RemoveEnds(command[2])) {
-			arg2, err = strconv.Atoi(extra.RemoveEnds(command[2]))
+		if len(command) >= 3 {
+			var arg2 int
+			if extra.IsInteger(extra.RemoveEnds(command[2])) {
+				arg2, err = strconv.Atoi(extra.RemoveEnds(command[2]))
+			}
+			if err != nil {
+				return ""
+			}
+			switch arg1 {
+			case "follow":
+				go ExecuteFollowProcess(arg2)
+			case "message":
+				go ExecuteMessageProcess(arg2)
+			}
+		} else if len(command) >= 2 {
+			switch arg1 {
+			case "chatbot":
+				go ExecuteChatbotProcess()
+
+			}
 		}
 
-		if err != nil {
-			return ""
-		}
-		switch arg1 {
-		case "follow":
-			go ExecuteFollowProcess(arg2)
-		case "message":
-			go ExecuteMessageProcess(arg2)
-		case "chatbot":
-			go ExecuteChatbotProcess()
-		}
 		bodyString = "Command received... processing"
 	}
 
