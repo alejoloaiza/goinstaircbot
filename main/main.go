@@ -16,10 +16,8 @@ func main() {
 	_ = config.GetConfig(arg)
 	db.DBConnectPostgres()
 	defer db.DBClosePostgress()
-
 	instagram.LoadMappings()
 	instagram.LoadFollowingFromDB()
 	instagram.LoadBlockedFromDB()
 	irc.StartIRCprocess()
-
 }

@@ -27,13 +27,11 @@ func StartIRCprocess() {
 MainCycle:
 	for {
 		Connection, err := net.Dial("tcp", config.Localconfig.IRCServerPort)
-
 		if err != nil {
 			log.Println(err)
 			time.Sleep(2000 * time.Millisecond)
 			continue MainCycle
 		}
-
 		fmt.Fprintln(Connection, "NICK "+config.Localconfig.IRCNick)
 		fmt.Fprintln(Connection, "USER "+config.Localconfig.IRCUser)
 		fmt.Fprintln(Connection, "JOIN "+config.Localconfig.IRCChannels)
@@ -104,26 +102,7 @@ MainCycle:
 }
 
 func ProcessCommand(command []string) string {
-
 	var bodyString string
-	/*
-		var UserToFollow string = ""
-		if strings.TrimSpace(command[0]) == "stop" {
-			OutChan <- "stop"
-			bodyString = "Command received... processing"
-		}
-		if len(command) >= 3 && strings.TrimSpace(command[0]) == "set" {
-			if extra.RemoveEnds(command[1]) == "proxy" {
-				config.Localconfig.UseProxy, _ = strconv.ParseBool(extra.RemoveEnds(command[2]))
-				bodyString = "Proxy set to " + strconv.FormatBool(config.Localconfig.UseProxy)
-			}
-			if extra.RemoveEnds(command[1]) == "logout" {
-				instagram.InstaLogout()
-				bodyString = "Logged out"
-
-			}
-		}
-	*/
 	if strings.TrimSpace(command[0]) == "init" {
 		var err error
 		arg1 := extra.RemoveEnds(command[1])
@@ -148,10 +127,8 @@ func ProcessCommand(command []string) string {
 
 			}
 		}
-
 		bodyString = "Command received... processing"
 	}
-
 	return bodyString
 }
 

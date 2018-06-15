@@ -18,6 +18,7 @@ const (
 	WaitInsideLikersLoop     = 1  // Time in Seconds to wait between Instagram Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
 	WaitAfterFollow          = 10 // Time in Seconds to wait between Instagram Follow and Profile Api calls, carefull this parameter cannot be two low or Instagram will reject some of the calls.
 	WaitBetweenChatbotCycles = 5  // Time in Minutes to check if someone has reponded any of my direct messages to respond back based on Dialog Flow.
+	WaitGeneral              = 1  // Time to use for general cases.
 )
 
 var (
@@ -99,20 +100,20 @@ func StartFollowingWithMediaLikes(Limit int) {
 			var ok bool
 			_, ok = r.(error)
 			if !ok {
-				sendMessage(ToIRCChan, fmt.Sprintf("Recover from error: %v", r))
+				sendMessage(fmt.Sprintf("Recover from error: %v", r))
 			}
 		}
 	}()
 	var FollowCount int = 0
+FollowingLoop:
 	for _, myUser := range FollowingList {
 
 		user, err := Insta.Profiles.ByName(myUser)
 		CheckErr(err)
 
-		sendMessage(ToIRCChan, fmt.Sprintf("Checking user >>> %s ", myUser))
+		sendMessage(fmt.Sprintf("Checking user >>> %s ", myUser))
 
 		media := user.Feed()
-	MediaLoop:
 		for media.Next() {
 			for _, item := range media.Items {
 				err = item.SyncLikers()
@@ -120,8 +121,8 @@ func StartFollowingWithMediaLikes(Limit int) {
 				for _, liker := range item.Likers {
 					match := false
 					if FollowCount >= Limit {
-						sendMessage(ToIRCChan, fmt.Sprintf("Finished with #%v ", FollowCount))
-						break MediaLoop
+						sendMessage(fmt.Sprintf("Finished with #%v ", FollowCount))
+						break FollowingLoop
 					}
 					fullname := strings.Split(liker.FullName, " ")
 					firstname := strings.ToLower(fullname[0])
@@ -132,7 +133,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 							continue
 						}
 						biography := strings.ToLower(profile.Biography)
-						sendMessage(ToIRCChan, fmt.Sprintf("Checking liker >>> %s ", liker.Username))
+						sendMessage(fmt.Sprintf("Checking liker >>> %s ", liker.Username))
 
 					PreferenceLoop:
 						for _, pref := range config.Localconfig.BiographyPreference {
@@ -141,7 +142,7 @@ func StartFollowingWithMediaLikes(Limit int) {
 								FollowCount++
 								Following[profile.Username] = 1
 								match = true
-								sendMessage(ToIRCChan, fmt.Sprintf("MATCH #%v: Following >>> %s ", FollowCount, liker.Username))
+								sendMessage(fmt.Sprintf("MATCH #%v: Following >>> %s ", FollowCount, liker.Username))
 								time.Sleep(WaitAfterFollow * time.Second)
 								break PreferenceLoop
 							}
@@ -163,7 +164,7 @@ func StartSendingNewMessages(Limit int) {
 			var ok bool
 			_, ok = r.(error)
 			if !ok {
-				sendMessage(ToIRCChan, fmt.Sprintf("Recover from error: %v", r))
+				sendMessage(fmt.Sprintf("Recover from error: %v", r))
 			}
 		}
 	}()
@@ -171,10 +172,10 @@ func StartSendingNewMessages(Limit int) {
 	for _, iuser := range inboxusers {
 		InboxUsers[iuser] = 1
 	}
-	sendMessage(ToIRCChan, "Inbox fully loaded")
+	sendMessage("Inbox fully loaded")
 	for _, myUser := range FollowingList {
 		if MessageCount >= Limit {
-			sendMessage(ToIRCChan, fmt.Sprintf("Finished with #%v ", MessageCount))
+			sendMessage(fmt.Sprintf("Finished with #%v ", MessageCount))
 			break
 		}
 		if InboxUsers[myUser] != 1 {
@@ -187,7 +188,7 @@ func StartSendingNewMessages(Limit int) {
 			}
 			MessageCount++
 			InboxUsers[myUser] = 1
-			sendMessage(ToIRCChan, fmt.Sprintf("Message #%v sent to: %s ", MessageCount, myUser))
+			sendMessage(fmt.Sprintf("Message #%v sent to: %s ", MessageCount, myUser))
 			time.Sleep(WaitBetweenMessages * time.Minute)
 
 		}
@@ -218,13 +219,13 @@ func SyncMappings(followingList []string, blockedList []string) {
 	}
 }
 func SyncFollowingDBfromApp() {
-	sendMessage(ToIRCChan, "Started Sync of Following")
+	sendMessage("Started Sync of Following")
 	defer func() {
 		if r := recover(); r != nil {
 			var ok bool
 			_, ok = r.(error)
 			if !ok {
-				sendMessage(ToIRCChan, fmt.Sprintf("Recover from error: %v", r))
+				sendMessage(fmt.Sprintf("Recover from error: %v", r))
 			}
 		}
 	}()
@@ -274,7 +275,7 @@ func SyncFollowingDBfromApp() {
 
 	}
 	SyncMappings(followingusersApp, db.DBSelectPostgres_Blocked())
-	sendMessage(ToIRCChan, "Finished Sync of Following")
+	sendMessage("Finished Sync of Following")
 
 }
 
@@ -298,9 +299,9 @@ func getAllFollowing_FromInstagram() []string {
 	}
 	return followingusers
 }
-func sendMessage(toirc chan string, message string) {
+func sendMessage(message string) {
 	log.Printf(message)
-	toirc <- message
+	ToIRCChan <- message
 }
 func StartChatbot() {
 	defer func() {
@@ -308,7 +309,7 @@ func StartChatbot() {
 			var ok bool
 			_, ok = r.(error)
 			if !ok {
-				sendMessage(ToIRCChan, fmt.Sprintf("Recover from error: %v", r))
+				sendMessage(fmt.Sprintf("Recover from error: %v", r))
 			}
 		}
 	}()
@@ -327,8 +328,8 @@ func StartChatbot() {
 							if CheckErr(err) {
 								continue
 							}
-							sendMessage(ToIRCChan, fmt.Sprintf("Chatbot responded to: %s, with msg: %s", conv.Inviter.Username, responsemsg))
-							time.Sleep(1 * time.Second)
+							sendMessage(fmt.Sprintf("Chatbot responded to: %s, with msg: %s", conv.Inviter.Username, responsemsg))
+							time.Sleep(WaitGeneral * time.Second)
 						}
 					}
 				}
@@ -350,7 +351,10 @@ func GetResponseFromDialogFlow(text string, username string) string {
 }
 func CheckErr(e error) bool {
 	if e != nil {
-		sendMessage(ToIRCChan, fmt.Sprintf("Error ocurred %s", e.Error()))
+		sendMessage(fmt.Sprintf("Error ocurred: %s", e.Error()))
+		if strings.Contains(strings.ToLower(e.Error()), "wait a few minutes") {
+			time.Sleep(WaitGeneral * time.Minute)
+		}
 		return true
 	} else {
 		return false
