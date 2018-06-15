@@ -322,6 +322,7 @@ func StartChatbot() {
 			if conv.Inviter.Username != config.Localconfig.InstaUser {
 				for _, item := range conv.Items {
 					if item.Type == "text" {
+						log.Printf("Text from: %s with text: %s\n", conv.Inviter.Username, item.Text)
 						responsemsg := GetResponseFromDialogFlow(item.Text, conv.Inviter.Username)
 						if responsemsg != "" {
 							err = conv.Send(responsemsg)
@@ -329,8 +330,10 @@ func StartChatbot() {
 								continue
 							}
 							sendMessage(fmt.Sprintf("Chatbot responded to: %s, with msg: %s", conv.Inviter.Username, responsemsg))
-							time.Sleep(WaitGeneral * time.Second)
+						} else {
+							sendMessage(fmt.Sprintf("Chatbot found a new message but Dialog Flow gave empty response, message is: %s", item.Text))
 						}
+						time.Sleep(WaitGeneral * time.Second)
 					}
 				}
 			}
