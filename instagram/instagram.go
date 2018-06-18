@@ -314,6 +314,7 @@ func StartChatbot() {
 		}
 	}()
 	for {
+		sendMessage("Chatbot cycle has started!")
 		err := Insta.Inbox.Sync()
 		if CheckErr(err) {
 			break
